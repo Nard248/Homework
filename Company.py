@@ -7,7 +7,7 @@ class Company:
 
     def __init__(self, name: str, director=None, budget=0):
         list_of_employees = []
-        self._name = name
+        self.name = name
         self._director = director
         self.budget = budget
         Company.id += 1
@@ -22,7 +22,7 @@ class Company:
     def getEmployee(self, name, surname):
         employee: Employee
         for employee in self._employees:
-            if employee._name == name and employee._surname == surname:
+            if employee.name == name and employee.surname == surname:
                 return employee
 
     def getEmployees(self):
@@ -36,8 +36,8 @@ class Employee(ABC):
     def __init__(self, name: str, surname: str, company_id: int, mentor=None, salary=0):
         Employee.employee_id += 1
         self._id = Employee.employee_id
-        self._name = name
-        self._surname = surname
+        self.name = name
+        self.surname = surname
         self.company_id = company_id
         self.mentor = mentor
         self._salary = salary
@@ -87,13 +87,13 @@ class SWEngineer(Employee):
         Employee.employee_id += 1
 
     def take_vacation(self, days):
-        return f"{self._name} is taking vacation form {days} days"
+        return f"{self.name} is taking vacation form {days} days"
 
     def do_work(self):
-        return f"{self._name} is working"
+        return f"{self.name} is working"
 
     def do_coding(self):
-        return f"{self._name} is coding"
+        return f"{self.name} is coding"
 
 
 class SWManager(SWEngineer, Manager):
@@ -106,23 +106,23 @@ class SWManager(SWEngineer, Manager):
     def mentor_employee(self, employee: SWEngineer):
         if employee.mentor is None:
             employee.mentor = self
-            return f"Employee {employee._name} is being mentored by {self._name} from now on"
+            return f"Employee {employee.name} is being mentored by {self.name} from now on"
         else:
-            return f"The employee {employee._name} already has a mentor` {employee.mentor}"
+            return f"The employee {employee.name} already has a mentor` {employee.mentor}"
 
     def distribute_tasks(self, task_list, employee: SWEngineer):
         if self == employee.mentor:
             employee.tasks = task_list
-            return f"Successfully distributed tasks for {employee._name}"
+            return f"Successfully distributed tasks for {employee.name}"
         else:
-            return f"{self._name} is not mentor of {employee._name} to give tasks"
+            return f"{self.name} is not mentor of {employee.name} to give tasks"
 
     def review_salary(self, employee: SWEngineer):
-        return f"Salary of {employee._name} is {employee._salary}"
+        return f"Salary of {employee.name} is {employee._salary}"
 
     def evaluate_employee(self, grade, employee: SWEngineer):
         employee.evaluation = grade
-        return f"Evaluation the {employee._name} with grade of {grade}"
+        return f"Evaluation the {employee.name} with grade of {grade}"
 
 
 class Accountant(Employee):
@@ -133,13 +133,13 @@ class Accountant(Employee):
         Employee.employee_id += 1
 
     def take_vacation(self, days):
-        return f"{self._name} is taking Vacation for {days} days"
+        return f"{self.name} is taking Vacation for {days} days"
 
     def do_work(self):
-        return f"{self._name} is doing work"
+        return f"{self.name} is doing work"
 
     def release_salary(self, employee: Employee):
-        return f"{self._name} released salary for {employee._name} in amount of {employee._salary}"
+        return f"{self.name} released salary for {employee.name} in amount of {employee._salary}"
 
 
 # TODO implement Manager abstract class abstract methods in this implementation
@@ -151,17 +151,18 @@ class FinanceManager(Accountant, Manager):
         Employee.employee_id += 1
 
     def create_company_budget(self, budget):
+        company: Company
         company = Company.list_of_companies[self.company_id - 1]
         company.budget = budget
-        return f"Successfully created budget for company {company._name}, with " \
+        return f"Successfully created budget for company {company.name}, with " \
                f"amount of {budget} "
 
     def review_salary(self, employee: Accountant):
-        return f"Salary of {employee._name} is {employee._salary}"
+        return f"Salary of {employee.name} is {employee._salary}"
 
     def evaluate_employee(self, grade: int, employee: Accountant):
         employee.evaluation = grade
-        return f"Evaluation the {employee._name} with grade of {grade}"
+        return f"Evaluation the {employee.name} with grade of {grade}"
 
 
 class SalesPerson(Employee):
@@ -172,10 +173,10 @@ class SalesPerson(Employee):
         Employee.employee_id += 1
 
     def take_vacation(self, days):
-        return f"{self._name} is taking Vacation for {days} days"
+        return f"{self.name} is taking Vacation for {days} days"
 
     def do_work(self):
-        return f"{self._name} is doing work"
+        return f"{self.name} is doing work"
 
     def run_product_demo(self):
         pass
@@ -188,34 +189,34 @@ class Executive(Employee):
         super(Executive, self).__init__(name, surname, company_id)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
-        Executive.executives_list.append(self._name)
+        Executive.executives_list.append(self.name)
 
     def take_vacation(self, days):
-        return f"{self._name} is taking Vacation for {days} days"
+        return f"{self.name} is taking Vacation for {days} days"
 
     def do_work(self):
-        return f"{self._name} is doing work"
+        return f"{self.name} is doing work"
 
     @staticmethod
     def confirm_hiring(employee: Employee):
         apply_status = True
         employee.apply_status = apply_status
-        return f'{employee._name} is successfully applied'
+        return f'{employee.name} is successfully applied'
 
     @staticmethod
     def confirm_firing(employee: Employee):
         employee.fired_status = False
-        return f'{employee._name} is fired'
+        return f'{employee.name} is fired'
 
     def confirm_company_budget(self):
+        company: Company
         company = Company.list_of_companies[self.company_id - 1]
         if company.budget > 10000 or company.budget is None:
             company.budget_confirm = False
             return f"Budget of size {company.budget} cannot be accepted, according to company's executive"
         else:
             company.budget_confirm = True
-            return f"{company._name}'s budget is successfully confirmed"
-
+            return f"{company.name}'s budget is successfully confirmed"
 
 
 onex = Company('Onex')
