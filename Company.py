@@ -42,7 +42,7 @@ class Employee(ABC):
     employee_id = 0
     employee_list = []
 
-    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, mentor=None, salary=0):
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, mentor=None, salary=0, team=[]):
         Employee.employee_id += 1
         self._id = Employee.employee_id
         self.name = name
@@ -52,7 +52,9 @@ class Employee(ABC):
         self.pass_id = pass_id
         self.mentor = mentor
         self._salary = salary
+        self.team = team
         Employee.employee_list.append(self)
+
 
     @abstractmethod
     def do_work(self):
@@ -78,20 +80,22 @@ class Manager(ABC):
     def get_direct_reports(self):
         return self.direct_reports
 
+    # def get_team(self):
+    #     team_members = []
+    #     employee: Employee
+    #     for employee in Employee.employee_list:
+    #         if employee.mentor == self:
+    #             team_members.append(employee)
+    #     return team_members
     def get_team(self):
-        team_members = []
-        employee: Employee
-        for employee in Employee.employee_list:
-            if employee.mentor == self:
-                team_members.append(employee)
-        return team_members
+        return self.team
 
 
 class SWEngineer(Employee):
 
-    def __init__(self, name: str, surname: str, company_id: int, title: str, salary=1000):
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, title, mentor=None, salary=0, team=[]):
         assert company_id in Company.id_list, 'No such company defined'
-        super().__init__(name, surname, company_id)
+        super().__init__(name, surname, company_id, age, pass_id, mentor, team)
         self._title = title
         self._id = Employee.employee_id + 1
         self._salary = salary
@@ -108,8 +112,8 @@ class SWEngineer(Employee):
 
 
 class SWManager(SWEngineer, Manager):
-    def __init__(self, name, surname, company_id, title='Manager', direct_reports=[]):
-        SWEngineer.__init__(self, name=name, surname=surname, company_id=company_id, title=title)
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, title='Manager', mentor=None, salary=0, team=[], direct_reports=[]):
+        SWEngineer.__init__(self, name, surname, company_id, age, pass_id, title, mentor, salary, team)
         Manager.__init__(self, direct_reports)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
@@ -118,6 +122,7 @@ class SWManager(SWEngineer, Manager):
         if employee.mentor is None:
             employee.mentor = self
             self.direct_reports.append(employee)
+            self.team.append(employee)
             return f"Employee {employee.name} is being mentored by {self.name} from now on"
         else:
             return f"The employee {employee.name} already has a mentor` {employee.mentor}"
@@ -138,8 +143,8 @@ class SWManager(SWEngineer, Manager):
 
 
 class Accountant(Employee):
-    def __init__(self, name, surname, company_id, mentor=None):
-        super(Accountant, self).__init__(name, surname, company_id)
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, title='Accountant', mentor=None, salary=0, team=[]):
+        super(Accountant, self).__init__(name, surname, company_id, age, pass_id, title, mentor, salary, team)
         self.mentor = mentor
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
@@ -156,8 +161,8 @@ class Accountant(Employee):
 
 class FinanceManager(Accountant, Manager):
 
-    def __init__(self, name, surname, company_id, direct_reports: object = []):
-        Accountant.__init__(self, name, surname, company_id)
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, title='Accountant', mentor=None, salary=0, team=[], direct_reports=[]):
+        Accountant.__init__(self, name, surname, company_id, age, pass_id, title, mentor, salary, team)
         Manager.__init__(self, direct_reports)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
@@ -174,6 +179,7 @@ class FinanceManager(Accountant, Manager):
         if employee.mentor is None:
             employee.mentor = self
             self.direct_reports.append(employee)
+            self.team.append(employee)
             return f"Employee {employee.name} is being mentored by {self.name} from now on"
         else:
             return f"The employee {employee.name} already has a mentor` {employee.mentor}"
@@ -213,8 +219,8 @@ class SalesPerson(Employee):
 class Executive(Employee, Manager):
     executives_list = []
 
-    def __init__(self, name, surname, company_id, direct_reports=[]):
-        Employee.__init__(self, name, surname, company_id)
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, mentor=None, salary=0, team=[], direct_reports=[]):
+        Employee.__init__(self, name, surname, company_id, age, pass_id, mentor, salary, team)
         Manager.__init__(self, direct_reports)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
