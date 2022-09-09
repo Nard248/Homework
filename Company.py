@@ -4,14 +4,16 @@ from abc import ABC, abstractmethod
 class Company:
     id = 0
     list_of_companies: list[object] = []
+    id_list: list[int] = []
 
-    def __init__(self, name: str, director=None, budget=0):
+    def __init__(self, name: str, director: 'Executive' = None, budget=0):
         list_of_employees = []
         self.name = name
         self._director = director
         self.budget = budget
         Company.id += 1
         self._id = Company.id
+        Company.id_list.append(Company.id)
         employee: Employee
         for employee in Employee.employee_list:
             if employee.company_id == self._id:
@@ -28,17 +30,26 @@ class Company:
     def getEmployees(self):
         return self._employees
 
+    def hire_employee(self, name, surname, passport_id, age, _type, exp_salary, manager=None):
+        executive = self._director
+        if executive is not None and executive.confirm_hiring(age, exp_salary):
+            return Employee(name, surname, self._id, age, passport_id, manager, exp_salary)
+        else:
+            return f"No director or executive did not accept"
+
 
 class Employee(ABC):
     employee_id = 0
     employee_list = []
 
-    def __init__(self, name: str, surname: str, company_id: int, mentor=None, salary=0):
+    def __init__(self, name: str, surname: str, company_id: int, age, pass_id, mentor=None, salary=0):
         Employee.employee_id += 1
         self._id = Employee.employee_id
         self.name = name
         self.surname = surname
         self.company_id = company_id
+        self.age = age
+        self.pass_id = pass_id
         self.mentor = mentor
         self._salary = salary
         Employee.employee_list.append(self)
@@ -53,8 +64,8 @@ class Employee(ABC):
 
 
 class Manager(ABC):
-    def __init__(self):
-        self.direct_reports = None
+    def __init__(self, direct_reports):
+        self.direct_reports = direct_reports
 
     @abstractmethod
     def evaluate_employee(self, grade: int, employee: Employee):
@@ -79,7 +90,7 @@ class Manager(ABC):
 class SWEngineer(Employee):
 
     def __init__(self, name: str, surname: str, company_id: int, title: str, salary=1000):
-        assert company_id < Company.id, 'No such company defined'
+        assert company_id in Company.id_list, 'No such company defined'
         super().__init__(name, surname, company_id)
         self._title = title
         self._id = Employee.employee_id + 1
@@ -97,15 +108,16 @@ class SWEngineer(Employee):
 
 
 class SWManager(SWEngineer, Manager):
-    def __init__(self, name, surname, company_id, title='Manager', direct_reports=None):
-        super().__init__(name, surname, company_id, title)
-        self.direct_reports = direct_reports
+    def __init__(self, name, surname, company_id, title='Manager', direct_reports=[]):
+        SWEngineer.__init__(self, name=name, surname=surname, company_id=company_id, title=title)
+        Manager.__init__(self, direct_reports)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
 
     def mentor_employee(self, employee: SWEngineer):
         if employee.mentor is None:
             employee.mentor = self
+            self.direct_reports.append(employee)
             return f"Employee {employee.name} is being mentored by {self.name} from now on"
         else:
             return f"The employee {employee.name} already has a mentor` {employee.mentor}"
@@ -142,20 +154,36 @@ class Accountant(Employee):
         return f"{self.name} released salary for {employee.name} in amount of {employee._salary}"
 
 
-# TODO implement Manager abstract class abstract methods in this implementation
 class FinanceManager(Accountant, Manager):
 
-    def __init__(self, name, surname, company_id):
-        super(FinanceManager, self).__init__(name, surname, company_id)
+    def __init__(self, name, surname, company_id, direct_reports: object = []):
+        Accountant.__init__(self, name, surname, company_id)
+        Manager.__init__(self, direct_reports)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
 
     def create_company_budget(self, budget):
         company: Company
-        company = Company.list_of_companies[self.company_id - 1]
+        company_id: int = self.company_id - 1
+        company = Company.list_of_companies[company_id]
         company.budget = budget
         return f"Successfully created budget for company {company.name}, with " \
                f"amount of {budget} "
+
+    def mentor_employee(self, employee: Accountant):
+        if employee.mentor is None:
+            employee.mentor = self
+            self.direct_reports.append(employee)
+            return f"Employee {employee.name} is being mentored by {self.name} from now on"
+        else:
+            return f"The employee {employee.name} already has a mentor` {employee.mentor}"
+
+    def distribute_tasks(self, task_list, employee: Accountant):
+        if self == employee.mentor:
+            employee.tasks = task_list
+            return f"Successfully distributed tasks for {employee.name}"
+        else:
+            return f"{self.name} is not mentor of {employee.name} to give tasks"
 
     def review_salary(self, employee: Accountant):
         return f"Salary of {employee.name} is {employee._salary}"
@@ -179,14 +207,15 @@ class SalesPerson(Employee):
         return f"{self.name} is doing work"
 
     def run_product_demo(self):
-        pass
+        return f'{self.name} is releasing product demo'
 
 
-class Executive(Employee):
+class Executive(Employee, Manager):
     executives_list = []
 
-    def __init__(self, name, surname, company_id):
-        super(Executive, self).__init__(name, surname, company_id)
+    def __init__(self, name, surname, company_id, direct_reports=[]):
+        Employee.__init__(self, name, surname, company_id)
+        Manager.__init__(self, direct_reports)
         self._id = Employee.employee_id + 1
         Employee.employee_id += 1
         Executive.executives_list.append(self.name)
@@ -198,10 +227,10 @@ class Executive(Employee):
         return f"{self.name} is doing work"
 
     @staticmethod
-    def confirm_hiring(employee: Employee):
-        apply_status = True
-        employee.apply_status = apply_status
-        return f'{employee.name} is successfully applied'
+    def confirm_hiring(age, exp_salary):
+        if age <= 30 and exp_salary < 15000:
+            return True
+        return False
 
     @staticmethod
     def confirm_firing(employee: Employee):
@@ -218,14 +247,19 @@ class Executive(Employee):
             company.budget_confirm = True
             return f"{company.name}'s budget is successfully confirmed"
 
+    def review_salary(self, employee: Employee):
+        return f"Salary of {employee.name} is {employee._salary}"
 
-onex = Company('Onex')
-print(onex)
-globbing = Company('Globbing')
-print(globbing)
+    def evaluate_employee(self, grade, employee: Employee):
+        employee.evaluation = grade
+        return f"Evaluation the {employee.name} with grade of {grade}"
 
-empl1 = SWEngineer('Name', 'Surname', 1, 'Junior')
-print(type(Employee.employee_list[0]) == SWEngineer)
-manager_1 = SWManager('Manager', 'Surenyan', 1)
-manager_1.mentor_employee(empl1)
-print(manager_1.get_team())
+
+if __name__ == '__main__':
+    onex = Company('Onex')
+    globbing = Company('Globbing')
+
+    empl1 = SWEngineer('Name', 'Surname', 1, 'Junior')
+    manager_1 = SWManager('Manager', 'Surenyan', 1)
+    manager_1.mentor_employee(empl1)
+    print(manager_1.direct_reports)
